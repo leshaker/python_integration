@@ -88,3 +88,42 @@ def ToyModel2():
 	dxdt.append('+ k3 * A * B - k4 * C')
 
 	return (tName, xNames, pNames, dxdt)
+
+def MAPK():
+	'''
+	Model of the MAPK pathway by Kholodenko 2000
+	'''
+
+	# define x names
+	xNames = ['MKKK','MKKKp','MKK','MKKp','MKKpp','MAPK','MAPKp','MAPKpp']
+	# define p names
+	pNames = ['k1', 'k2', 'k3', 'k4','k5','k6','k7','k8','k9','k10',
+			  'KK1', 'KK2', 'KK3', 'KK4','KK5','KK6','KK7','KK8','KK9','KK10',
+			  'Ki','n']
+	# define t name
+	tName = 't'
+
+	# define reaction fluxes
+	v = ["", # flux v[0] = ""
+		 "k1*MKKK/((1+pow((MAPKpp/Ki),n))*(KK1+MKKK))",
+		 "k2*MKKKp/(KK2+MKKKp)",
+		 "k3*MKKKp*MKK/(KK3+MKK)",
+		 "k4*MKKKp*MKKp/(KK4+MKKp)",
+		 "k5*MKKpp/(KK5+MKKpp)",
+		 "k6*MKKp/(KK6+MKKp)",
+		 "k7*MKKpp*MAPK/(KK7+MAPK)",
+		 "k8*MKKpp*MAPKp/(KK8+MAPKp)",
+		 "k9*MAPKpp/(KK9+MAPKpp)",
+		 "k10*MAPKp/(KK10+MAPKp)"]
+
+	# define rhs of ODEs
+	dxdt = [v[2]+"-"+v[1], 						# MKKK
+			v[1]+"-"+v[2], 						# MKKKp
+			v[6]+"-"+v[3],						# MKK
+			v[3]+"+"+v[5]+"-"+v[4]+"-"+v[6],	# MKKp
+			v[4]+"-"+v[5],						# MKKpp
+			v[10]+"-"+v[7],						# MAPK
+			v[7]+"+"+v[9]+"-"+v[8]+"-"+v[10],	# MAPKp
+			v[8]+"-"+v[9]]						# MAPKpp
+
+	return (tName, xNames, pNames, dxdt)
