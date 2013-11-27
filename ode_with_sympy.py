@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.integrate import ode
+from scipy.integrate import odeint
 # import scipy.optimize as opt
 from matplotlib import pyplot
 from helper_funs import *
@@ -330,29 +331,29 @@ def write_jac_c(xs, ps, fs, dfdx):
 	return 1
 
 
-def integrate(p, x0, tSim):
+def integrate(p, x0, tSim, solver='vode'):
 	'''
 	simulate ode system
 	'''
 	import wrapper
-	# reload(ode_def)
 	
 	t0 = tSim[0]
 	t1 = tSim[-1]
 	dt = np.diff(tSim)
 
-	res	= ode(wrapper.ode,wrapper.jac).set_integrator('vode', 
-										method='bdf', 
-										order=15, 
-										nsteps=1000, 
-										with_jacobian=True,
-										)	
-	# res	= ode(wrapper.ode).set_integrator('vode', 
-	# 									method='bdf', 
-	# 									order=15, 
-	# 									nsteps=1000, 
-	# 									with_jacobian=False)
-		
+	if solver == 'vode':
+		res	= ode(wrapper.ode,wrapper.jac).set_integrator('vode', 
+											method='bdf', 
+											order=15, 
+											nsteps=1000, 
+											with_jacobian=True,
+											atol=1e-8,
+											rtol=1e-8
+											)	
+	else:
+		raise(Exception("Chosen integrator not yet implemented!"))
+
+			
 	res.set_initial_value(x0,t0)
 	res.set_f_params(p)
 	res.set_jac_params(p)
@@ -370,7 +371,8 @@ def integrate(p, x0, tSim):
 
 	t[0] = t0
 	x[0] = x0.flatten()
-	
+
+
 	return t, x
 
 def plot_vars(t, x, xNames):

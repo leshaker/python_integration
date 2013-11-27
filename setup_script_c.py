@@ -13,14 +13,15 @@ import time
 tstart = time.time()
 
 writeModel = False
-# writeModel = True
+writeModel = True
 flag = 'c'
 
 # load model
 # (tName, xNames, pNames, dxdt) = model_def.WCM_Met()
-(tName, xNames, pNames, dxdt) = model_def.EpoEpoR()
+# (tName, xNames, pNames, dxdt) = model_def.EpoEpoR()
 # (tName, xNames, pNames, dxdt) = model_def.ToyModel()
 # (tName, xNames, pNames, dxdt) = model_def.ToyModel2()
+(tName, xNames, pNames, dxdt) = model_def.MAPK()
 
 if writeModel==True:
 	# parse model
@@ -41,25 +42,32 @@ if writeModel==True:
 		os.system("python jac_setup.py build_ext --inplace")
 
 # set initial parameters
-p0 = np.ones([len(pNames)],dtype=np.float64)*1e-1
+# p0 = np.ones([len(pNames)],dtype=np.float64)*1e-1
+
+p0 = np.array([2.5, 0.25, 0.025, 0.025, 0.75, 0.75, 0.025, 0.025, 0.5, 0.5,
+	  		   10., 8., 15., 15., 15., 15., 15., 15., 15., 15.,
+	  		   9., 1.], 
+	  		   dtype=np.float64)
 
 # set initial concentrations
-x0 = np.ones([len(xNames)],dtype=np.float64) 
+x0 = np.zeros([len(xNames)],dtype=np.float64) +0.1
 x0[0] = 100
-x0[1] = 100
+x0[2] = 300
+x0[5] = 300 
 
 # set integration time
-t = np.linspace(0, 50, 300)
+t = np.linspace(0, 150*60, 1000)
 
 # integrate model
-[t, x] = integrate(p0, x0, t)
+[t, x] = integrate(p0, x0, t, 'vode')
 
 #  print elapsed time
 elapsed = time.time() - tstart
 print elapsed
 
 # plot model variables
-plot_vars(t, x, xNames)
+# plot_vars(t, x, xNames)
+plot_vars(t, x[:,[5,7]], [xNames[5],xNames[7]])
 
 
 
