@@ -1,6 +1,6 @@
 /*
  * -----------------------------------------------------------------
- * $Date: 2012/11/11$
+ * $Date: 2013/11/29$
  * -----------------------------------------------------------------
  * Programmer: Max Schelker
  * -----------------------------------------------------------------
@@ -38,7 +38,7 @@
 
 
 /* Problem Constants */
-#include "define.c"
+#include "includes/define.c"
 
 
 /* Functions Called by the Solver */
@@ -51,14 +51,9 @@ static int Jac(long int N, realtype t,
                N_Vector x, N_Vector fx, DlsMat J, void *user_data,
                N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
-/* Private functions to output results */
-
-static void PrintOutput(realtype t, realtype x1, realtype x2, realtype x3);
-static void PrintRootInfo(int root_f1, int root_f2);
-
 /* Private function to print final statistics */
 
-static void PrintFinalStats(void *cvode_mem);
+static void PrintResults(realtype t, N_Vector x);
 
 /* Private function to check function return values */
 
@@ -77,7 +72,6 @@ int main()
   N_Vector x, abstol;
   void *cvode_mem;
   int flag, flagr, iout;
-  int rootsfound[2];
 
   x = abstol = NULL;
   cvode_mem = NULL;
@@ -89,8 +83,7 @@ int main()
   if (check_flag((void *)abstol, "N_VNew_Serial", 0)) return(1);
 
   /* Initialize x */
-  #include "initialize.c"
-
+  #include "includes/initialize.c"
 
   /* Call CVodeCreate to create the solver memory and specify the 
    * Backward Differentiation Formula and the use of a Newton iteration */
@@ -108,10 +101,6 @@ int main()
   flag = CVodeSVtolerances(cvode_mem, reltol, abstol);
   if (check_flag(&flag, "CVodeSVtolerances", 1)) return(1);
 
-  // /* Call CVodeRootInit to specify the root function g with 2 components */
-  // flag = CVodeRootInit(cvode_mem, 2, g);
-  // if (check_flag(&flag, "CVodeRootInit", 1)) return(1);
-
   /* Call CVDense to specify the CVDENSE dense linear solver */
   flag = CVDense(cvode_mem, NEQ);
   if (check_flag(&flag, "CVDense", 1)) return(1);
@@ -122,30 +111,20 @@ int main()
 
   /* In loop, call CVode, print results, and test for error.
      Break out of loop when NOUT preset output times have been reached.  */
-  printf(" \n3-species kinetics problem\n\n");
+  printf(" \nOutput:\n\n");
 
-  iout = 0;  tout = T1;
-  while(1) {
+  iout = 0;  tout = T0+DT;
+  while((iout < NOUT) && (tout < T1)) {
     flag = CVode(cvode_mem, tout, x, &t, CV_NORMAL);
-    PrintOutput(t, Ith(x,1), Ith(x,2), Ith(x,3));
-
-    if (flag == CV_ROOT_RETURN) {
-      flagr = CVodeGetRootInfo(cvode_mem, rootsfound);
-      if (check_flag(&flagr, "CVodeGetRootInfo", 1)) return(1);
-      PrintRootInfo(rootsfound[0],rootsfound[1]);
-    }
-
+    PrintResults(t, x);
     if (check_flag(&flag, "CVode", 1)) break;
     if (flag == CV_SUCCESS) {
       iout++;
-      tout *= TMULT;
+      tout += DT;
     }
-
-    if (iout == NOUT) break;
   }
 
-  /* Print some final statistics */
-  PrintFinalStats(cvode_mem);
+  
 
   /* Free x and abstol vectors */
   N_VDestroy_Serial(x);
@@ -167,83 +146,17 @@ int main()
 /*
  * f routine. Compute function f(t,x). 
  */
-
-#include "ode_f.c"
-
-/*
- * g routine. Compute functions g_i(t,x) for i = 0,1. 
- */
-
-#include "ode_g.c"
+#include "includes/ode_f.c"
 
 /*
  * Jacobian routine. Compute J(t,x) = df/dx. *
  */
-
-#include "ode_jac.c"
+#include "includes/ode_jac.c"
 
 /*
- *-------------------------------
- * Private helper functions
- *-------------------------------
+ * Print results *
  */
-
-static void PrintOutput(realtype t, realtype x1, realtype x2, realtype x3)
-{
-#if defined(SUNDIALS_EXTENDED_PRECISION)
-  printf("At t = %0.4Le      x =%14.6Le  %14.6Le  %14.6Le\n", t, x1, x2, x3);
-#elif defined(SUNDIALS_DOUBLE_PRECISION)
-  printf("At t = %0.4le      x =%14.6le  %14.6le  %14.6le\n", t, x1, x2, x3);
-#else
-  printf("At t = %0.4e      x =%14.6e  %14.6e  %14.6e\n", t, x1, x2, x3);
-#endif
-
-  return;
-}
-
-static void PrintRootInfo(int root_f1, int root_f2)
-{
-  printf("    rootsfound[] = %3d %3d\n", root_f1, root_f2);
-
-  return;
-}
-
-/* 
- * Get and print some final statistics
- */
-
-static void PrintFinalStats(void *cvode_mem)
-{
-  long int nst, nfe, nsetups, nje, nfeLS, nni, ncfn, netf, nge;
-  int flag;
-
-  flag = CVodeGetNumSteps(cvode_mem, &nst);
-  check_flag(&flag, "CVodeGetNumSteps", 1);
-  flag = CVodeGetNumRhsEvals(cvode_mem, &nfe);
-  check_flag(&flag, "CVodeGetNumRhsEvals", 1);
-  flag = CVodeGetNumLinSolvSetups(cvode_mem, &nsetups);
-  check_flag(&flag, "CVodeGetNumLinSolvSetups", 1);
-  flag = CVodeGetNumErrTestFails(cvode_mem, &netf);
-  check_flag(&flag, "CVodeGetNumErrTestFails", 1);
-  flag = CVodeGetNumNonlinSolvIters(cvode_mem, &nni);
-  check_flag(&flag, "CVodeGetNumNonlinSolvIters", 1);
-  flag = CVodeGetNumNonlinSolvConvFails(cvode_mem, &ncfn);
-  check_flag(&flag, "CVodeGetNumNonlinSolvConvFails", 1);
-
-  flag = CVDlsGetNumJacEvals(cvode_mem, &nje);
-  check_flag(&flag, "CVDlsGetNumJacEvals", 1);
-  flag = CVDlsGetNumRhsEvals(cvode_mem, &nfeLS);
-  check_flag(&flag, "CVDlsGetNumRhsEvals", 1);
-
-  flag = CVodeGetNumGEvals(cvode_mem, &nge);
-  check_flag(&flag, "CVodeGetNumGEvals", 1);
-
-  printf("\nFinal Statistics:\n");
-  printf("nst = %-6ld nfe  = %-6ld nsetups = %-6ld nfeLS = %-6ld nje = %ld\n",
-	 nst, nfe, nsetups, nfeLS, nje);
-  printf("nni = %-6ld ncfn = %-6ld netf = %-6ld nge = %ld\n \n",
-	 nni, ncfn, netf, nge);
-}
+#include "includes/print_results.c"
 
 /*
  * Check function return value...
