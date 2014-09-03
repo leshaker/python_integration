@@ -2,3 +2,6 @@ syntax: glob
 *.o
 *.pyc
 *.so
+includes/
+bin/
+.nfs*
