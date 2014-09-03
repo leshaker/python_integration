@@ -8,34 +8,34 @@ def EpoEpoR():
 	'''
 
 	# define x names
-	xNames = ['Epo','EpoR','EpoEpoR', 'EpoEpoRi', 'dEpoi', 'dEpoe']
+	x_names = ['Epo','EpoR','EpoEpoR', 'EpoEpoRi', 'dEpoi', 'dEpoe']
 	# define p names
-	pNames = ['kon', 'koff', 'kex', 'kt', 'ke', 'kdi', 'kde', 'Bmax']
+	p_names = ['kon', 'koff', 'kex', 'kt', 'ke', 'kdi', 'kde', 'EpoR0']
 	# define t name
-	tName = 't'
+	t_name = 't'
 
 	# define rhs of ODEs
 	dxdt = []
 
 	dxdt.append('- kon * Epo * EpoR + koff * EpoEpoR + kex * EpoEpoRi')
-	dxdt.append('- kon * Epo * EpoR + koff * EpoEpoR + kt * Bmax - kt * EpoR + kex * EpoEpoRi')
+	dxdt.append('- kon * Epo * EpoR + koff * EpoEpoR + kt * EpoR0 - kt * EpoR + kex * EpoEpoRi')
 	dxdt.append('kon * Epo * EpoR - koff * EpoEpoR - ke * EpoEpoR')
 	dxdt.append('ke * EpoEpoR - kex * EpoEpoRi - kdi * EpoEpoRi - kde * EpoEpoRi')
 	dxdt.append('kdi * EpoEpoRi')
 	dxdt.append('kde * EpoEpoRi')
 
-	return (tName, xNames, pNames, dxdt)
+	return (t_name, x_names, p_names, dxdt)
 
 def ToyModel():
 	'''
 	Toy model
 	'''
 	# define x names
-	xNames = ['A','B','C']
+	x_names = ['A','B','C']
 	# define p names
-	pNames = ['k1', 'k2', 'k3', 'k4']
+	p_names = ['k1', 'k2', 'k3', 'k4']
 	# define t name
-	tName = 't'
+	t_name = 't'
 
 	# define rhs of ODEs
 	dxdt = []
@@ -44,7 +44,7 @@ def ToyModel():
 	dxdt.append('+ k1 * A - k2 * B - k3 * A * B + k4 * C')
 	dxdt.append('+ k3 * A * B - k4 * C')
 
-	return (tName, xNames, pNames, dxdt)
+	return (t_name, x_names, p_names, dxdt)
 
 def WCM_Met():
 	'''
@@ -55,30 +55,30 @@ def WCM_Met():
 
 	model_dict = Stanford_Lubitz2013.Met()
 	# define x names
-	xNames = model_dict['vars']
+	x_names = model_dict['vars']
 	# define p names
-	pNames = model_dict['pars']
+	p_names = model_dict['pars']
 	# define t name
-	tName = 't'
+	t_name = 't'
 
 	# define rhs of ODEs
 	dxdt = []
-	for x in xNames:
+	for x in x_names:
 		dxdt.append(model_dict['odes'][x])
 
 	print "\nmodel successfully loaded!\n"
-	return (tName, xNames, pNames, dxdt)
+	return (t_name, x_names, p_names, dxdt)
 
 def ToyModel2():
 	'''
 	Toy model
 	'''
 	# define x names
-	xNames = ['A','B','C']
+	x_names = ['A','B','C']
 	# define p names
-	pNames = ['k1', 'k2', 'k3', 'k4']
+	p_names = ['k1', 'k2', 'k3', 'k4']
 	# define t name
-	tName = 't'
+	t_name = 't'
 
 	# define rhs of ODEs
 	dxdt = []
@@ -87,7 +87,7 @@ def ToyModel2():
 	dxdt.append('+ k1 * A - k2 * B - k3 * A * B + k4 * C')
 	dxdt.append('+ k3 * A * B - k4 * C')
 
-	return (tName, xNames, pNames, dxdt)
+	return (t_name, x_names, p_names, dxdt)
 
 def MAPK():
 	'''
@@ -95,13 +95,13 @@ def MAPK():
 	'''
 
 	# define x names
-	xNames = ['MKKK','MKKKp','MKK','MKKp','MKKpp','MAPK','MAPKp','MAPKpp']
+	x_names = ['MKKK','MKKKp','MKK','MKKp','MKKpp','MAPK','MAPKp','MAPKpp']
 	# define p names
-	pNames = ['k1', 'k2', 'k3', 'k4','k5','k6','k7','k8','k9','k10',
+	p_names = ['k1', 'k2', 'k3', 'k4','k5','k6','k7','k8','k9','k10',
 			  'KK1', 'KK2', 'KK3', 'KK4','KK5','KK6','KK7','KK8','KK9','KK10',
 			  'Ki','n']
 	# define t name
-	tName = 't'
+	t_name = 't'
 
 	# define reaction fluxes
 	v = ["", # flux v[0] = ""
@@ -126,4 +126,4 @@ def MAPK():
 			v[7]+"+"+v[9]+"-"+v[8]+"-"+v[10],	# MAPKp
 			v[8]+"-"+v[9]]						# MAPKpp
 
-	return (tName, xNames, pNames, dxdt)
+	return (t_name, x_names, p_names, dxdt)
