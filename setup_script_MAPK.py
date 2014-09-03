@@ -5,7 +5,7 @@ Setup script for ode_with_sympy. Loads the model definition and calls
 the methods to parse, write, integrate and plot the model.
 '''
 
-from ode_with_sympy import *
+from cvode_with_sympy import *
 import model_def
 import os
 import time
