@@ -124,7 +124,8 @@ def modelHash(model_dict):
 	generate checksum for model dict
 	"""
 	
-	checksum = abs(hash(repr(model_dict)))
+	model_structure = [model_dict[m] for m in model_dict if m not in ['initpars','initvars']]
+	checksum = abs(hash(repr(model_structure)))
 	#checksum = abs(reduce(lambda x,y : x^y, [hash(str(item)) for item in model_dict.items()]))
 
 	return checksum
@@ -483,4 +484,25 @@ def plotVars(t, x, model_dict):
 	pyplot.xlabel('time [s]')
 	pyplot.ylabel('concentrations [mM]')
 	pyplot.show()
+
+
+def plotVarsExp(t, x, tExp, data, model_dict):
+	'''
+	plot trajectories
+	'''
+
+	from matplotlib import pyplot
+
+	ode_species = model_dict['vars']
+	name = model_dict['name']
+
+	pyplot.plot(t, x)
+	pyplot.plot(tExp,data['x'],'x')
+	pyplot.legend(ode_species)
+	pyplot.title(name)
+	pyplot.xlabel('time [s]')
+	pyplot.ylabel('concentrations [mM]')
+	pyplot.xlim([-0.05*t[-1],1.05*t[-1]])
+	pyplot.show()
+
 
