@@ -390,6 +390,8 @@ def integrateSundials(model_dict, species_values=[], parameter_values=[], tSim=[
 
 	# run solver binary
 	solver_cmd =  "./%s %s" % (model_compiled, args_str)
+	# print solver_cmd
+
 	process = subprocess.Popen(solver_cmd.split(), stdout=subprocess.PIPE,stderr=subprocess.PIPE) 
 
 	# read stdout of solver and convert it to array
@@ -400,8 +402,8 @@ def integrateSundials(model_dict, species_values=[], parameter_values=[], tSim=[
 	stderr = " ".join([line.replace('\n', '') for line in process.stderr.readlines()])
 
 	# print stderr
-	# if stderr:
-	#     pass
+	if stderr:
+		print stderr
 
 	# append initial values and timepoint
 	tx0 = x0
@@ -452,3 +454,23 @@ def writeModelFiles(model_dict,force=False,atol=1e-5,rtol=1e-8, minstep=0.0, che
 		compileModel(model_dict)
 
 	return 1
+
+def objectiveFunction(model_dict,initvars,initpars,data,tExp):
+
+	model_dict['initpars'] = initpars
+	model_dict['initvars'] = initvars
+
+	t,x = integrateSundials(model_dict,tSim=tExp)
+	chi2 = np.sum((x-data['x'])**2/data['sd']**2)
+
+	return chi2
+
+
+# def calculateDerivative(model_dict,initvars,initpars,data,tExp):
+# 	import ad
+
+# 	chi2 = objectiveFunction(model_dict,initvars,initpars,data,tExp)
+# 	dxdp = ad.jacobian(chi2,initpars.values())
+
+# 	return dxdp
+
