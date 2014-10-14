@@ -465,6 +465,122 @@ def objectiveFunction(model_dict,initvars,initpars,data,tExp):
 
 	return chi2
 
+def convertToD2D(model_dict,savepath='./D2D'):
+
+	if not os.path.exists(savepath):
+		os.mkdir(savepath)
+
+	# get model name
+	model_name = cleanModelName(model_dict)
+
+	# create subfolders
+	model_path = os.path.join(savepath,'Models')
+	data_path = os.path.join(savepath,'Data')
+	if not os.path.exists(model_path):
+		os.mkdir(model_path)
+	if not os.path.exists(data_path):
+		os.mkdir(data_path)
+
+	# open new model file
+	fid = open(os.path.join(model_path,model_name+'.def'),'w')
+
+	# write DESCRIPTION block
+	if 'description' in model_dict:
+		desc = model_dict['description']
+	else:
+		desc = model_dict['name']
+
+	tmp_str = '%s\n\"%s\"\n\n' % ('DESCRIPTION',desc)
+	fid.write(tmp_str)
+
+	# write PREDICTOR block
+	tmp_str = '%s\n%s\t\t%s\t%s\t\t%s\t\t%d\t%d\n\n' % ('PREDICTOR', 't', 'T','min','time',0,3000)
+	fid.write(tmp_str)
+
+	# define compartments
+	if 'compartments' in model_dict:
+		compartments = model_dict['compartments']
+	else:
+		compartments = {'cyt':{'volume':1,'units':'fl'}}
+
+	# write COMPARTMENTS block
+	tmp_str = '%s\n%s\n\n' % ('COMPARTMENTS','')
+	fid.write(tmp_str)
+	
+	# define units
+	if 'units' in model_dict:
+		units = model_dict['units']
+	else:
+		units = {var:'pM' for var in model_dict['vars']}
+
+	# write STATES block
+	tmp_str = '%s\n' % ('STATES')
+	fid.write(tmp_str)
+
+	for x in model_dict['vars']:
+		tmp_str = '%s\t\t%s\t%s\t%s\t%d\n' % (x, 'C', units[x], 'conc.', 1)
+		fid.write(tmp_str)
+	fid.write('\n\n')
+
+	# write INPUTS block
+	tmp_str = '%s\n%s\n\n' % ('INPUTS','')
+	fid.write(tmp_str)
+
+	# write ODES block
+	tmp_str = '%s\n' % ('ODES')
+	fid.write(tmp_str)
+
+	for x in model_dict['vars']:
+		ode = mathToMatlab(model_dict['odes'][x])
+		tmp_str = '\"%s\"\n' % (ode)
+		fid.write(tmp_str)
+	fid.write('\n\n')
+
+	# write DERIVED block
+	tmp_str = '%s\n%s\n\n' % ('DERIVED','')
+	fid.write(tmp_str)
+
+	# write CONDITIONS block
+	tmp_str = '%s\n%s\n\n' % ('CONDITIONS','')
+	fid.write(tmp_str)
+
+	# write PARAMETERS block
+	tmp_str = '%s\n' % ('PARAMETERS')
+	fid.write(tmp_str)
+	
+	for p in model_dict['initpars']:
+		tmp_str = '%s\t\t%f\t%d\t%d\t%d\t%d\n' % (p, np.log10(model_dict['initpars'][p]),1,1,-3,5)
+		fid.write(tmp_str)
+	fid.write('\n')	
+	for x0 in model_dict['initvars']:
+		tmp_str = 'init_%s\t\t%f\t%d\t%d\t%d\t%d\n' % (x0, np.log10(model_dict['initvars'][x0]),1,1,-3,5)
+		fid.write(tmp_str)
+	fid.write('\n\n')	
+
+	# close file
+	fid.close()
+
+	fid = open(os.path.join('./D2D','Setup.m'),'w')
+
+	tmp_str = "arInit;\n\narLoadModel('%s');\n\narCompileAll;\n\narPlot;" % (model_name)
+	fid.write(tmp_str)
+
+	# close file
+	fid.close()
+
+	return 1
+
+def mathToMatlab(math_str):
+
+	import re
+
+	# replace pow(a,b) by (a)^(b)
+	pattern = "pow\s?\(\s?([A-Z_a-z0-9\s/]*),\s?([A-Z_a-z0-9\s/]*)\)"
+	repl = "(\g<1>)^(\g<2>)"
+	matlab_str = math_str.replace(' ','')
+	matlab_str = re.sub(pattern, repl, matlab_str)
+
+	return matlab_str
 
 # def calculateDerivative(model_dict,initvars,initpars,data,tExp):
 # 	import ad
