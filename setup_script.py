@@ -8,12 +8,15 @@ the methods to parse, write, integrate and plot the model.
 from cvode_with_sympy import *
 import model_def
 import time
+import sys
 
-# EpoEpoR model
-(t_name, x_names, p_names, dxdt) = model_def.EpoEpoR()
-x0 = [80, 100, 0, 0, 0, 0]
-p0 = [1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 100]
-model_dict = convToDict('EpoEpoR model', x_names, p_names, dxdt, x0, p0)
+sys.path.insert(0, '../WCM/')
+
+# # EpoEpoR model
+# (t_name, x_names, p_names, dxdt) = model_def.EpoEpoR()
+# x0 = [80, 100, 0, 0, 0, 0]
+# p0 = [1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 100]
+# model_dict = convToDict('EpoEpoR model', x_names, p_names, dxdt, x0, p0)
 
 # # Toy model
 # (t_name, x_names, p_names, dxdt) = model_def.ToyModel()
@@ -32,10 +35,9 @@ model_dict = convToDict('EpoEpoR model', x_names, p_names, dxdt, x0, p0)
 # model_dict = convToDict('MAPK model', x_names, p_names, dxdt, x0, p0)
 
 
-# import WCM_SBML
-# modelfile = '../WCM/sbml_models/Kholodenko2000_Ultra.xml'
-# model_dict = WCM_SBML.sbmlImportToDict(modelfile)
-# WCM_SBML.writePythonModule(model_dict)
+import WCM_SBML
+modelfile = '../WCM/sbml_models/Kholodenko2000_Ultra.xml'
+model_dict = WCM_SBML.sbmlImportToDict(modelfile)
 
 # import CellCycle
 # model_dict = CellCycle.CellCycle()
@@ -116,3 +118,5 @@ plotVars(t, x, model_dict)
 
 
 # # calculateDerivative(model_dict,initvars,initpars,data,tExp)
+
+convertToD2D(model_dict)
