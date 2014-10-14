@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 
 
 /*
- * Jacobian routine. Compute J(t,x) = df/dx.
+ * Jacobian routine. Compute J(t,x) = df/dx. *
  */
 #include "../includes/ode_jac.c"
 
