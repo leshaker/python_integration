@@ -506,3 +506,14 @@ def plotVarsExp(t, x, tExp, data, model_dict):
 	pyplot.show()
 
 
+def mathToMatlab(math_str):
+
+	import re
+
+	# replace pow(a,b) by (a)^(b)
+	pattern = "pow\s?\(\s?([A-Z_a-z0-9\s/]*),\s?([A-Z_a-z0-9\s/]*)\)"
+	repl = "(\g<1>)^(\g<2>)"
+	matlab_str = math_str.replace(' ','')
+	matlab_str = re.sub(pattern, repl, matlab_str)
+
+	return matlab_str

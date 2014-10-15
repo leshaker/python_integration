@@ -22,7 +22,7 @@ def parseSym(model_dict):
 	ode_alg_species = model_dict['vars']
 
 	# read algebraic equations
-	if 'alg_eqs' in model_dict.keys():
+	if 'alg_eqs' in model_dict:
 		alg_eqs_species = [species for species in model_dict['alg_eqs']]
 		# define rhs of alg. eqs
 		alg_eqs = [model_dict['alg_eqs'][species] for species in alg_eqs_species]
@@ -473,6 +473,19 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	# get model name
 	model_name = cleanModelName(model_dict)
 
+	# define x names
+	ode_species = [species for species in model_dict['odes']]
+
+	# read algebraic equations
+	if 'alg_eqs' in model_dict:
+		alg_eqs_species = [species for species in model_dict['alg_eqs']]
+		alg_eqs_species.sort()
+		# define rhs of alg. eqs
+		alg_eqs = [model_dict['alg_eqs'][species] for species in alg_eqs_species]
+	else:
+		alg_eqs_species = []
+		alg_eqs = []
+
 	# create subfolders
 	model_path = os.path.join(savepath,'Models')
 	data_path = os.path.join(savepath,'Data')
@@ -517,8 +530,11 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	tmp_str = '%s\n' % ('STATES')
 	fid.write(tmp_str)
 
-	for x in model_dict['vars']:
+	for x in ode_species:
 		tmp_str = '%s\t\t%s\t%s\t%s\t%d\n' % (x, 'C', units[x], 'conc.', 1)
+		fid.write(tmp_str)
+	for alg in alg_eqs_species:
+		tmp_str = '%s\t\t%s\t%s\t%s\t%d\n' % (alg, 'C', units[alg], 'conc.', 1)
 		fid.write(tmp_str)
 	fid.write('\n\n')
 
@@ -530,9 +546,12 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	tmp_str = '%s\n' % ('ODES')
 	fid.write(tmp_str)
 
-	for x in model_dict['vars']:
+	for x in ode_species:
 		ode = mathToMatlab(model_dict['odes'][x])
 		tmp_str = '\"%s\"\n' % (ode)
+		fid.write(tmp_str)
+	for alg in alg_eqs_species:
+		tmp_str = '\"0\"\n'
 		fid.write(tmp_str)
 	fid.write('\n\n')
 
@@ -541,8 +560,13 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	fid.write(tmp_str)
 
 	# write CONDITIONS block
-	tmp_str = '%s\n%s\n\n' % ('CONDITIONS','')
+	tmp_str = '%s\n' % ('CONDITIONS')
 	fid.write(tmp_str)
+
+	for alg in alg_eqs_species:
+		tmp_str = '%s\t\t\"%s\"\n' % (alg, mathToMatlab(model_dict['alg_eqs'][alg]))
+		fid.write(tmp_str)
+	fid.write('\n\n')
 
 	# write PARAMETERS block
 	tmp_str = '%s\n' % ('PARAMETERS')
@@ -550,8 +574,7 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	
 	for p in model_dict['initpars']:
 		tmp_str = '%s\t\t%f\t%d\t%d\t%d\t%d\n' % (p, np.log10(model_dict['initpars'][p]),1,1,-3,5)
-		fid.write(tmp_str)
-	fid.write('\n')	
+		fid.write(tmp_str)	
 	for x0 in model_dict['initvars']:
 		tmp_str = 'init_%s\t\t%f\t%d\t%d\t%d\t%d\n' % (x0, np.log10(model_dict['initvars'][x0]),1,1,-3,5)
 		fid.write(tmp_str)
@@ -569,18 +592,6 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	fid.close()
 
 	return 1
-
-def mathToMatlab(math_str):
-
-	import re
-
-	# replace pow(a,b) by (a)^(b)
-	pattern = "pow\s?\(\s?([A-Z_a-z0-9\s/]*),\s?([A-Z_a-z0-9\s/]*)\)"
-	repl = "(\g<1>)^(\g<2>)"
-	matlab_str = math_str.replace(' ','')
-	matlab_str = re.sub(pattern, repl, matlab_str)
-
-	return matlab_str
 
 # def calculateDerivative(model_dict,initvars,initpars,data,tExp):
 # 	import ad

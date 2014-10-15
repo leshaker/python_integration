@@ -12,6 +12,9 @@ import sys
 
 sys.path.insert(0, '../WCM/')
 
+# import TestModuleAlgebraicEquations
+# model_dict = TestModuleAlgebraicEquations.TestModuleAlgebraicEquations()
+
 # # EpoEpoR model
 # (t_name, x_names, p_names, dxdt) = model_def.EpoEpoR()
 # x0 = [80, 100, 0, 0, 0, 0]
