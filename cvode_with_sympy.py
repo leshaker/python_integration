@@ -326,8 +326,8 @@ def compileModel(model_dict):
 	"-o%s%s" % ("./bin/",model_compiled)]
 	process = subprocess.Popen(compile_cmd, stderr=subprocess.PIPE)
 	stdout, stderr = process.communicate()
-	# if stderr:
-	#     pass 
+	if stderr:
+		print stderr, '\n' 
 
 	return
 
@@ -465,6 +465,7 @@ def objectiveFunction(model_dict,initvars,initpars,data,tExp):
 
 	return chi2
 
+
 def convertToD2D(model_dict,savepath='./D2D'):
 
 	if not os.path.exists(savepath):
@@ -475,16 +476,15 @@ def convertToD2D(model_dict,savepath='./D2D'):
 
 	# define x names
 	ode_species = [species for species in model_dict['odes']]
+	ode_species.sort()
 
 	# read algebraic equations
 	if 'alg_eqs' in model_dict:
 		alg_eqs_species = [species for species in model_dict['alg_eqs']]
 		alg_eqs_species.sort()
 		# define rhs of alg. eqs
-		alg_eqs = [model_dict['alg_eqs'][species] for species in alg_eqs_species]
 	else:
 		alg_eqs_species = []
-		alg_eqs = []
 
 	# create subfolders
 	model_path = os.path.join(savepath,'Models')
@@ -573,10 +573,16 @@ def convertToD2D(model_dict,savepath='./D2D'):
 	fid.write(tmp_str)
 	
 	for p in model_dict['initpars']:
-		tmp_str = '%s\t\t%f\t%d\t%d\t%d\t%d\n' % (p, np.log10(model_dict['initpars'][p]),1,1,-3,5)
+		if model_dict['initpars'][p] > 0:
+			tmp_str = '%s\t\t%f\t%d\t%d\t%d\t%d\n' % (p, np.log10(model_dict['initpars'][p]),1,1,-3,5)
+		else:
+			tmp_str = '%s\t\t%f\t%d\t%d\t%d\t%d\n' % (p, model_dict['initpars'][p],1,0,0,1000)
 		fid.write(tmp_str)	
 	for x0 in model_dict['initvars']:
-		tmp_str = 'init_%s\t\t%f\t%d\t%d\t%d\t%d\n' % (x0, np.log10(model_dict['initvars'][x0]),1,1,-3,5)
+		if model_dict['initvars'][x0] > 0:
+			tmp_str = 'init_%s\t\t%f\t%d\t%d\t%d\t%d\n' % (x0, np.log10(model_dict['initvars'][x0]),1,1,-3,5)
+		else:
+			tmp_str = 'init_%s\t\t%f\t%d\t%d\t%d\t%d\n' % (x0, model_dict['initvars'][x0],1,0,0,1000)
 		fid.write(tmp_str)
 	fid.write('\n\n')	
 

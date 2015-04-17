@@ -516,4 +516,7 @@ def mathToMatlab(math_str):
 	matlab_str = math_str.replace(' ','')
 	matlab_str = re.sub(pattern, repl, matlab_str)
 
+	# replace a**b by a^b
+	matlab_str = matlab_str.replace('**','^')
+
 	return matlab_str

@@ -11,6 +11,11 @@ import time
 import sys
 
 sys.path.insert(0, '../WCM/')
+sys.path.insert(0, '../WCM/python_models')
+sys.path.insert(0, '../WCM/python_models_for_testing')
+
+import TRP_volume_regulation_rheology
+model_dict = TRP_volume_regulation_rheology.TRP_volume_regulation_rheology()
 
 # import TestModuleAlgebraicEquations
 # model_dict = TestModuleAlgebraicEquations.TestModuleAlgebraicEquations()
@@ -37,13 +42,12 @@ sys.path.insert(0, '../WCM/')
 # x0[5] = 300 
 # model_dict = convToDict('MAPK model', x_names, p_names, dxdt, x0, p0)
 
+# import WCM_SBML
+# modelfile = '../WCM/sbml_models/
+# model_dict = WCM_SBML.sbmlImportToDict(modelfile)
 
-import WCM_SBML
-modelfile = '../WCM/sbml_models/Kholodenko2000_Ultra.xml'
-model_dict = WCM_SBML.sbmlImportToDict(modelfile)
-
-# import CellCycle
-# model_dict = CellCycle.CellCycle()
+# import cell_cycle
+# model_dict = cell_cycle.cell_cycle()
 
 # import MET_TCA_mitochondrion
 # model_dict = MET_TCA_mitochondrion.MET_TCA_mitochondrion()
@@ -54,7 +58,7 @@ model_dict = WCM_SBML.sbmlImportToDict(modelfile)
 writeModelFiles(model_dict)
 
 # set integration time
-t = np.linspace(0,3000,500)
+t = np.linspace(0,300,300)
 
 # simulate
 t,x = integrateSundials(model_dict,tSim=t)
