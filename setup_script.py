@@ -10,12 +10,12 @@ import model_def
 import time
 import sys
 
-sys.path.insert(0, '../WCM/')
-sys.path.insert(0, '../WCM/python_models')
-sys.path.insert(0, '../WCM/python_models_for_testing')
+sys.path.insert(0, '../wcm/')
+sys.path.insert(0, '../wcm/python_models')
+sys.path.insert(0, '../wcm/python_models_for_testing')
 
-import TRP_volume_regulation_rheology
-model_dict = TRP_volume_regulation_rheology.TRP_volume_regulation_rheology()
+# import TRP_volume_regulation_rheology
+# model_dict = TRP_volume_regulation_rheology.TRP_volume_regulation_rheology()
 
 # import TestModuleAlgebraicEquations
 # model_dict = TestModuleAlgebraicEquations.TestModuleAlgebraicEquations()
@@ -31,16 +31,16 @@ model_dict = TRP_volume_regulation_rheology.TRP_volume_regulation_rheology()
 # model_dict = convToDict('Toy model', x_names, p_names, dxdt)
 
 # MAPK model
-# (t_name, x_names, p_names, dxdt) = model_def.MAPK()
-# p0 = np.array([2.5, 0.25, 0.025, 0.025, 0.75, 0.75, 0.025, 0.025, 0.5, 0.5,
-# 	  		   10., 8., 15., 15., 15., 15., 15., 15., 15., 15.,
-# 	  		   9., 1.], 
-# 	  		   dtype=np.float64)
-# x0 = np.zeros([len(x_names)],dtype=np.float64) +0.1
-# x0[0] = 100
-# x0[2] = 300
-# x0[5] = 300 
-# model_dict = convToDict('MAPK model', x_names, p_names, dxdt, x0, p0)
+(t_name, x_names, p_names, dxdt) = model_def.MAPK()
+p0 = np.array([2.5, 0.25, 0.025, 0.025, 0.75, 0.75, 0.025, 0.025, 0.5, 0.5,
+	  		   10., 8., 15., 15., 15., 15., 15., 15., 15., 15.,
+	  		   9., 1.], 
+	  		   dtype=np.float64)
+x0 = np.zeros([len(x_names)],dtype=np.float64) +0.1
+x0[0] = 100
+x0[2] = 300
+x0[5] = 300 
+model_dict = convToDict('MAPK model', x_names, p_names, dxdt, x0, p0)
 
 # import WCM_SBML
 # modelfile = '../WCM/sbml_models/
@@ -55,7 +55,7 @@ model_dict = TRP_volume_regulation_rheology.TRP_volume_regulation_rheology()
 # import MET_glycolysis_cyto
 # model_dict = MET_glycolysis_cyto.MET_glycolysis_cyto()
 
-writeModelFiles(model_dict)
+writeModelFiles(model_dict,force=True)
 
 # set integration time
 t = np.linspace(0,300,300)

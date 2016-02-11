@@ -58,7 +58,7 @@ def parseSym(model_dict):
 	exec("%s = sym.symbols('%s')" % (t_name, t_name))
 
 	# group ODEs
-	dxdt_sym = sym.zeros([len(ode_alg_species), 1])
+	dxdt_sym = sym.zeros(len(ode_alg_species), 1)
 	fstr = ''
 	for i, f in enumerate(dxdt):
 		# rename max and min function names for sympy
@@ -67,7 +67,7 @@ def parseSym(model_dict):
 		fstr = 'dxdt_sym[%d] = %s' % (i, f)
 		exec(fstr)
 
-	alg_eqs_sym = sym.zeros([len(alg_eqs_species), 1])
+	alg_eqs_sym = sym.zeros(len(alg_eqs_species), 1)
 	fstr = ''
 	for i, f in enumerate(alg_eqs):
 		fstr = 'alg_eqs_sym[%d] = %s' % (i, f)
@@ -200,7 +200,7 @@ def writeOdeSundials(model_dict,xs,ps,fs,xs_alg,gs,checknegative):
 
 	# write odes
 	for i, f in enumerate(fs_c):
-		if f!=0:
+		if not (f=='0' or f=='0.0' or f==0):
 			tmp_str = '\tIth(xdot,%d) = %s;\n' % (i+1, f)
 			fid.write(tmp_str)
 			fid.write('\n')
@@ -270,12 +270,12 @@ def writeJacSundials(model_dict,xs,ps,fs,xs_alg,gs,dfdx):
 	# write jacobian
 	for i in range(dfdx.shape[0]):
 		for j in range(dfdx.shape[1]):
-			if dfdx[i,j]!=0:
-							# convert formula to c-style
-							dfdx_c = convToCstr([dfdx[i,j]])
-							tmp_str = '\tIJth(J,%d,%d) = %s;\n' % (i+1,j+1, dfdx_c[0])
-							fid.write(tmp_str)
-							fid.write('\n')
+			# convert formula to c-style
+			dfdx_c = convToCstr([dfdx[i,j]])
+			if not (dfdx_c[0]=='0' or dfdx_c[0]=='0.0' or dfdx_c[0]==0):
+				tmp_str = '\tIJth(J,%d,%d) = %s;\n' % (i+1,j+1, dfdx_c[0])
+				fid.write(tmp_str)
+				fid.write('\n')
 
 	# write variables definitions
 	for i, x in enumerate(xs):
