@@ -1,5 +1,5 @@
 import numpy as np
-import os  
+import os
 
 from helper_funs import *
 
@@ -270,9 +270,9 @@ def writeJacSundials(model_dict,xs,ps,fs,xs_alg,gs,dfdx):
 	# write jacobian
 	for i in range(dfdx.shape[0]):
 		for j in range(dfdx.shape[1]):
-			# convert formula to c-style
-			dfdx_c = convToCstr([dfdx[i,j]])
-			if not (dfdx_c[0]=='0' or dfdx_c[0]=='0.0' or dfdx_c[0]==0):
+			if not dfdx[i,j]==0:
+				# convert formula to c-style
+				dfdx_c = convToCstr([dfdx[i,j]])
 				tmp_str = '\tIJth(J,%d,%d) = %s;\n' % (i+1,j+1, dfdx_c[0])
 				fid.write(tmp_str)
 				fid.write('\n')

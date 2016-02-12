@@ -1,5 +1,5 @@
 '''
-Model definition script for ode_with_sympy
+Model definition script for cvode_with_sympy
 '''
 
 def EpoEpoR():
@@ -44,29 +44,6 @@ def ToyModel():
 	dxdt.append('+ k1 * A - k2 * B - k3 * A * B + k4 * C')
 	dxdt.append('+ k3 * A * B - k4 * C')
 
-	return (t_name, x_names, p_names, dxdt)
-
-def WCM_Met():
-	'''
-	Toy model
-	'''
-
-	import Stanford_Lubitz2013
-
-	model_dict = Stanford_Lubitz2013.Met()
-	# define x names
-	x_names = model_dict['vars']
-	# define p names
-	p_names = model_dict['pars']
-	# define t name
-	t_name = 't'
-
-	# define rhs of ODEs
-	dxdt = []
-	for x in x_names:
-		dxdt.append(model_dict['odes'][x])
-
-	print "\nmodel successfully loaded!\n"
 	return (t_name, x_names, p_names, dxdt)
 
 def ToyModel2():

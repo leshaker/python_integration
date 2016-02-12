@@ -114,7 +114,10 @@ def convToCstr(formula):
 	
 	formula_c = []
 	for i in range(len(formula[:])):
-		formula_c.append(ccode(formula[i]))
+		c_str = ccode(formula[i])
+		# remove Heaviside warning
+		c_str = c_str.replace("// Not supported in C:\n// Heaviside\n", '')
+		formula_c.append(c_str)
 
 	return formula_c
 
