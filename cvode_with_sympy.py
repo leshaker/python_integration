@@ -118,7 +118,7 @@ def writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol=1e-6,rtol=1e-6,hmin=0.0
 		atol = [atol for x in range(len(fs))]
 
 	init_str = "hmin = RCONST(%e);\t\t/* minimal stepsize */\n" % hmin
-	init_str = "hmax = RCONST(%e);\t\t/* maximal stepsize */\n" % hmax
+	init_str = init_str + "hmax = RCONST(%e);\t\t/* maximal stepsize */\n" % hmax
 	init_str = init_str + "mxsteps = RCONST(%e);\t\t/* maximal number of steps */\n" % mxsteps
 	init_str = init_str + "reltol = RCONST(%e);\t\t/* scalar relative tolerance */\n" % rtol
 	for i in range(len(fs)):
