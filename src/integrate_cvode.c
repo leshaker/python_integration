@@ -1,6 +1,6 @@
 /*
  * -----------------------------------------------------------------
- * $Date: 2014/01/21$
+ * $Date: 2016/02/15$
  * -----------------------------------------------------------------
  * Programmer: Max Schelker
  * -----------------------------------------------------------------
@@ -76,11 +76,11 @@ static float Min(float x, float y);
 
 int main(int argc, char *argv[])
 {
-  realtype reltol, minstep, mxsteps, t, tout;
+  realtype reltol, hmin, hmax, mxsteps, t, tout;
   N_Vector x, abstol;
   UserData data;
   void *cvode_mem;
-  int flag, flagr, iout, i, j, nout;
+  int flag, flagr, iout, i, j;
 
   if (argc != NPARS+NEQ+4) {
     printf("%s\n", "not enough input arguments!");
@@ -102,17 +102,6 @@ int main(int argc, char *argv[])
 
   for ( i = 0; i < 3; i++ ) {
     times[i] = atof(argv[i+1+NEQ+NPARS]);
-  }
-
-  /* define number of output points*/
-  nout = (times[1]-times[0])/times[2];
-
-  /* define max number of steps */
-  if (times[1] > 100) {
-    mxsteps = 10*times[1];
-  } 
-  else {
-    mxsteps = 1000;
   }
 
   x = abstol = NULL;
@@ -161,8 +150,12 @@ int main(int argc, char *argv[])
   if (check_flag(&flag, "CVodeSVtolerances", 1)) return(1);
   
   /* Call CVodeSetMinStep to specify the minimal stepsize */
-  flag = CVodeSetMinStep(cvode_mem, minstep);
+  flag = CVodeSetMinStep(cvode_mem, hmin);
   if (check_flag(&flag, "CVodeSetMinStep", 1)) return(1);
+
+  /* Call CVodeSetMinStep to specify the maximal stepsize */
+  flag = CVodeSetMaxStep(cvode_mem, hmax);
+  if (check_flag(&flag, "CVodeSetMaxStep", 1)) return(1);
 
   /* Call CVodeSetMinStep to specify the minimal stepsize */
   flag = CVodeSetMaxNumSteps(cvode_mem, mxsteps);

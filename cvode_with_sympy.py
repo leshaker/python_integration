@@ -95,11 +95,11 @@ def parseSym(model_dict):
 	return (xs,ps,fs,xs_alg,gs,dfdx)
 
 
-def writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol=1e-5,rtol=1e-8, minstep=0.0):
+def writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol=1e-6,rtol=1e-6,hmin=0.0,hmax=0.0,mxsteps=0.0):
 	"""
 	Write initialization file for sundials solver
 	"""
-	# get model name
+
 	model_name = cleanModelName(model_dict)
 
 	if not os.path.exists('includes'):
@@ -111,21 +111,24 @@ def writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol=1e-5,rtol=1e-8, minstep
 	define_str = define_str+"#define NEQ %d\t\t/* number of equations */\n" % len(fs)
 	fid.write(define_str)
 	fid.close()
-
+	
 	fname_init = model_name+'_initialize.c'
 	fid = open('./includes/'+fname_init, 'w')
 	if (type(atol)!=list):
 		atol = [atol for x in range(len(fs))]
 
-	init_str = "minstep = RCONST(%e);\t\t/* minimal stepsize */\n" % minstep
-	init_str = init_str+"reltol = RCONST(%e);\t\t/* scalar relative tolerance */\n" % rtol
+	init_str = "hmin = RCONST(%e);\t\t/* minimal stepsize */\n" % hmin
+	init_str = "hmax = RCONST(%e);\t\t/* maximal stepsize */\n" % hmax
+	init_str = init_str + "mxsteps = RCONST(%e);\t\t/* maximal number of steps */\n" % mxsteps
+	init_str = init_str + "reltol = RCONST(%e);\t\t/* scalar relative tolerance */\n" % rtol
 	for i in range(len(fs)):
-		init_str = init_str+"Ith(abstol,%d) = RCONST(%e);\t\t/* vector absolute tolerance components */\n" % (i+1, atol[i])
+		init_str = init_str + "Ith(abstol,%d) = RCONST(%e);\t\t/* vector absolute tolerance components */\n" % (i+1, atol[i])
 	fid.write(init_str)
 	fid.close()
 
 	return 1
 
+	
 def writeOdeSundials(model_dict,xs,ps,fs,xs_alg,gs,checknegative):
 	'''
 	write ODEs to c-file for sundials
@@ -417,27 +420,36 @@ def integrateSundials(model_dict, species_values=[], parameter_values=[], tSim=[
 
 	return t, x
 
-def writeModelFiles(model_dict,force=False,atol=1e-5,rtol=1e-8, minstep=0.0, checknegative=True):
+def writeModelFiles(model_dict,force=False,atol=1e-6,rtol=1e-6,hmin=0.0,hmax=0.0,mxsteps=0.0,checknegative=True):
 	"""
-	Checks if model dict has changed. 
+	Checks if model_dict has changed. 
 	Writes all c-files needed for simulation with sundials CVODE.
 
 	"""
 
 	model_name = cleanModelName(model_dict)
 
+	# get solver options from model_dict
+	if 'solveropts' in model_dict:
+		solveropts = model_dict['solveropts']
+		if 'atol' in solveropts: atol = solveropts['atol']
+		if 'rtol' in solveropts: rtol = solveropts['rtol']
+		if 'hmin' in solveropts: hmin = solveropts['hmin']
+		if 'hmax' in solveropts: hmax = solveropts['hmax']
+		if 'mxsteps' in solveropts: mxsteps = solveropts['mxsteps']
+
 	# check if bin directory exists
 	if not os.path.exists('bin'):
 		os.mkdir('./bin')
 
-	# check if model exists and if checksum has changed
+	# check if module exists and if checksum has changed
 	flist = os.listdir("./bin")
 	bin_files = [f for f in flist if model_name in f]
 	checksum = modelHash(model_dict)
 	bin = [x for x in bin_files if str(checksum) in x]
 	bin_exists = [str(checksum) in b for b in bin]
 
-	if force or (len(bin_exists)!=1 or bin_exists[0]==False):
+	if force or (len(bin_exists) != 1 or bin_exists[0]==False):
 		# remove old bin files
 		for bin in bin_files:
 			rm_cmd = "rm -rf %s" % os.path.join('./bin/',bin)
@@ -445,7 +457,7 @@ def writeModelFiles(model_dict,force=False,atol=1e-5,rtol=1e-8, minstep=0.0, che
 		# parse model
 		(xs,ps,fs,xs_alg,gs,dfdx) = parseSym(model_dict)
 		# write define.c and initialize.c
-		writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol,rtol,minstep)
+		writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol,rtol,hmin,hmax,mxsteps)
 		# write ode_f.c
 		writeOdeSundials(model_dict,xs,ps,fs,xs_alg,gs,checknegative)
 		# write ode_jac.c
@@ -454,6 +466,7 @@ def writeModelFiles(model_dict,force=False,atol=1e-5,rtol=1e-8, minstep=0.0, che
 		compileModel(model_dict)
 
 	return 1
+
 
 def objectiveFunction(model_dict,initvars,initpars,data,tExp):
 
