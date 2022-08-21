@@ -3,7 +3,7 @@ import os
 
 from helper_funs import *
 
-def parseSym(model_dict):   
+def parseSym(model_dict):
 	'''
 	parse model variables and parameters to symbolic variables
 	and calculate derivatives
@@ -16,14 +16,14 @@ def parseSym(model_dict):
 
 	# get model name
 	model_name = cleanModelName(model_dict)
-	
+
 	# define x names
-	ode_species = [species for species in model_dict['odes']]
+	ode_species = list(model_dict['odes'])
 	ode_alg_species = model_dict['vars']
 
 	# read algebraic equations
 	if 'alg_eqs' in model_dict:
-		alg_eqs_species = [species for species in model_dict['alg_eqs']]
+		alg_eqs_species = list(model_dict['alg_eqs'])
 		# define rhs of alg. eqs
 		alg_eqs = [model_dict['alg_eqs'][species] for species in alg_eqs_species]
 	else:
@@ -32,7 +32,7 @@ def parseSym(model_dict):
 
 	# define p names
 	parameters = model_dict['pars']
-	
+
 	# define t name
 	t_name = 't'
 
@@ -105,27 +105,23 @@ def writeInitSundials(model_dict,xs,ps,fs,xs_alg,gs,atol=1e-6,rtol=1e-6,hmin=0.0
 	if not os.path.exists('includes'):
 		os.mkdir('./includes')
 
-	fname_def = model_name+'_define.c'
-	fid = open('./includes/'+fname_def, 'w')
-	define_str = "#define NPARS %d\t\t/* number of parameters */\n" % (len(ps))
-	define_str = define_str+"#define NEQ %d\t\t/* number of equations */\n" % len(fs)
-	fid.write(define_str)
-	fid.close()
-	
-	fname_init = model_name+'_initialize.c'
-	fid = open('./includes/'+fname_init, 'w')
-	if (type(atol)!=list):
-		atol = [atol for x in range(len(fs))]
+	fname_def = f'{model_name}_define.c'
+	with open(f'./includes/{fname_def}', 'w') as fid:
+		define_str = "#define NPARS %d\t\t/* number of parameters */\n" % (len(ps))
+		define_str = define_str+"#define NEQ %d\t\t/* number of equations */\n" % len(fs)
+		fid.write(define_str)
+	fname_init = f'{model_name}_initialize.c'
+	with open(f'./includes/{fname_init}', 'w') as fid:
+		if (type(atol)!=list):
+			atol = [atol for _ in range(len(fs))]
 
-	init_str = "hmin = RCONST(%e);\t\t/* minimal stepsize */\n" % hmin
-	init_str = init_str + "hmax = RCONST(%e);\t\t/* maximal stepsize */\n" % hmax
-	init_str = init_str + "mxsteps = RCONST(%e);\t\t/* maximal number of steps */\n" % mxsteps
-	init_str = init_str + "reltol = RCONST(%e);\t\t/* scalar relative tolerance */\n" % rtol
-	for i in range(len(fs)):
-		init_str = init_str + "Ith(abstol,%d) = RCONST(%e);\t\t/* vector absolute tolerance components */\n" % (i+1, atol[i])
-	fid.write(init_str)
-	fid.close()
-
+		init_str = "hmin = RCONST(%e);\t\t/* minimal stepsize */\n" % hmin
+		init_str = init_str + "hmax = RCONST(%e);\t\t/* maximal stepsize */\n" % hmax
+		init_str = init_str + "mxsteps = RCONST(%e);\t\t/* maximal number of steps */\n" % mxsteps
+		init_str = init_str + "reltol = RCONST(%e);\t\t/* scalar relative tolerance */\n" % rtol
+		for i in range(len(fs)):
+			init_str = init_str + "Ith(abstol,%d) = RCONST(%e);\t\t/* vector absolute tolerance components */\n" % (i+1, atol[i])
+		fid.write(init_str)
 	return 1
 
 	
@@ -134,10 +130,7 @@ def writeOdeSundials(model_dict,xs,ps,fs,xs_alg,gs,checknegative):
 	write ODEs to c-file for sundials
 	'''
 
-	if checknegative:
-		checknegative_c = "TRUE"
-	else:
-		checknegative_c = "FALSE"
+	checknegative_c = "TRUE" if checknegative else "FALSE"
 	# get model name
 	model_name = cleanModelName(model_dict)
 
@@ -146,82 +139,83 @@ def writeOdeSundials(model_dict,xs,ps,fs,xs_alg,gs,checknegative):
 	gs_c = convToCstr(gs)
 
 	alg_dict = dict(zip(xs_alg,gs_c))
-	fname_ode = model_name+'_ode_f.c'
-	fid = open('./includes/'+fname_ode, 'w')
+	fname_ode = f'{model_name}_ode_f.c'
+	with open(f'./includes/{fname_ode}', 'w') as fid:
+		header = (
+			"static int f(realtype t, N_Vector x, N_Vector xdot, void *user_data)\n"
+			+ "{\n\n"
+		)
 
-	# write header
-	header = "static int f(realtype t, N_Vector x, N_Vector xdot, void *user_data)\n"
-	header = header+"{\n\n"
-	header = header+"\tint i;"
-	header = header+"\tUserData data;\n"
-	header = header+"\tbooleantype check_negative = %s;\n" % (checknegative_c)
-	fid.write(header)
+		header += "\tint i;"
+		header += "\tUserData data;\n"
+		header += "\tbooleantype check_negative = %s;\n" % (checknegative_c)
+		fid.write(header)
 
-	# write parameter definitions
-	par_def = "\t/* Extract needed constants from data */\n"
-	par_def = par_def+"\tdata = (UserData) user_data;\n"
-	par_def = par_def+"\tdouble p[NPARS];\n"
-	par_def = par_def+"\tfor (i=0; i<NPARS; i++) p[i] = data->p[i];\n\n"
-	fid.write(par_def)
+		par_def = (
+			"\t/* Extract needed constants from data */\n"
+			+ "\tdata = (UserData) user_data;\n"
+		)
 
-	for i, p in enumerate(ps):
-		tmp_str = '\trealtype %s =  p[%d];\n' % (p, i)
-		fid.write(tmp_str)
-		fid.write('\n')
+		par_def += "\tdouble p[NPARS];\n"
+		par_def += "\tfor (i=0; i<NPARS; i++) p[i] = data->p[i];\n\n"
+		fid.write(par_def)
 
-		# tmp_str = "\tprintf(\"\\n\\n\");\n"
-		# fid.write(tmp_str)
-
-	# write variables definitions
-	for i, x in enumerate(xs):
-		tmp_str = '\trealtype %s =  Ith(x,%d);\n' % (x, i+1)
-		fid.write(tmp_str)
-		# tmp_str = "\tprintf(\"%%f\\n\", %s);\n" % (x)
-		# fid.write(tmp_str)
-		fid.write('\n')
-
-
-	# write alg eqs definitions
-	for alg in alg_dict:
-		tmp_str = '\t%s =  %s;\n' % (alg,alg_dict[alg])
-		fid.write(tmp_str)
-		# tmp_str = "\tprintf(\"%%f\\n\", %s);\n" % (alg)
-		# fid.write(tmp_str)
-		fid.write('\n')
-
-	# tmp_str = "\tprintf(\"\\n\\n\");\n"
-	# fid.write(tmp_str)
-
-	# # check for neg species # FIXME!
-	# non_neg_spec = [sp.origins[model.name] for sp in model.sp_obj if not sp.type == 'thermodynamic']
-	# non_neg_spec_cond = ["%s<-1e-5" % (spec) for spec in non_neg_spec]
-
-	# fid.write("\t%s%s%s" % ("if (check_negative && (", " || ".join(non_neg_spec_cond),")) {\n"))
-	# # fid.write("\t\tprintf(\"%s\\n\", \"At least one species turned negative!\");\n")
-	# fid.write("\t\treturn(1);\n")
-	# fid.write("\t}\n")
-
-	# write odes
-	for i, f in enumerate(fs_c):
-		if not (f=='0' or f=='0.0' or f==0):
-			tmp_str = '\tIth(xdot,%d) = %s;\n' % (i+1, f)
+		for i, p in enumerate(ps):
+			tmp_str = '\trealtype %s =  p[%d];\n' % (p, i)
 			fid.write(tmp_str)
 			fid.write('\n')
 
-	# write variables definitions
-	for i, x in enumerate(xs):
-		if x in xs_alg:
-			tmp_str = '\tIth(x,%d) = %s;\n' % (i+1, x)
+			# tmp_str = "\tprintf(\"\\n\\n\");\n"
+			# fid.write(tmp_str)
+
+		# write variables definitions
+		for i, x in enumerate(xs):
+			tmp_str = '\trealtype %s =  Ith(x,%d);\n' % (x, i+1)
 			fid.write(tmp_str)
 			# tmp_str = "\tprintf(\"%%f\\n\", %s);\n" % (x)
 			# fid.write(tmp_str)
 			fid.write('\n')
 
-	# write footer  
-	footer = '\treturn(0);\n}\n'
-	fid.write(footer)
-	fid.close()
 
+		# write alg eqs definitions
+		for alg in alg_dict:
+			tmp_str = '\t%s =  %s;\n' % (alg,alg_dict[alg])
+			fid.write(tmp_str)
+			# tmp_str = "\tprintf(\"%%f\\n\", %s);\n" % (alg)
+			# fid.write(tmp_str)
+			fid.write('\n')
+
+			# tmp_str = "\tprintf(\"\\n\\n\");\n"
+			# fid.write(tmp_str)
+
+			# # check for neg species # FIXME!
+			# non_neg_spec = [sp.origins[model.name] for sp in model.sp_obj if not sp.type == 'thermodynamic']
+			# non_neg_spec_cond = ["%s<-1e-5" % (spec) for spec in non_neg_spec]
+
+			# fid.write("\t%s%s%s" % ("if (check_negative && (", " || ".join(non_neg_spec_cond),")) {\n"))
+			# # fid.write("\t\tprintf(\"%s\\n\", \"At least one species turned negative!\");\n")
+			# fid.write("\t\treturn(1);\n")
+			# fid.write("\t}\n")
+
+			# write odes
+		for i, f in enumerate(fs_c):
+			if f not in ['0', '0.0', 0]:
+				tmp_str = '\tIth(xdot,%d) = %s;\n' % (i+1, f)
+				fid.write(tmp_str)
+				fid.write('\n')
+
+		# write variables definitions
+		for i, x in enumerate(xs):
+			if x in xs_alg:
+				tmp_str = '\tIth(x,%d) = %s;\n' % (i+1, x)
+				fid.write(tmp_str)
+				# tmp_str = "\tprintf(\"%%f\\n\", %s);\n" % (x)
+				# fid.write(tmp_str)
+				fid.write('\n')
+
+		# write footer  
+		footer = '\treturn(0);\n}\n'
+		fid.write(footer)
 	return 1
 
 def writeJacSundials(model_dict,xs,ps,fs,xs_alg,gs,dfdx):
@@ -235,63 +229,64 @@ def writeJacSundials(model_dict,xs,ps,fs,xs_alg,gs,dfdx):
 	gs_c = convToCstr(gs)
 	alg_dict = dict(zip(xs_alg,gs_c))
 
-	fname_jac = model_name+'_ode_jac.c'
-	fid = open('./includes/'+fname_jac, 'w')
+	fname_jac = f'{model_name}_ode_jac.c'
+	with open(f'./includes/{fname_jac}', 'w') as fid:
+		header = (
+			"static int Jac(long int N, realtype t, N_Vector x, N_Vector fx, DlsMat J, void *user_data,\nN_Vector tmp1, N_Vector tmp2, N_Vector tmp3)\n"
+			+ "{\n\n"
+		)
 
-	# write header
-	header = "static int Jac(long int N, realtype t, N_Vector x, N_Vector fx, DlsMat J, void *user_data,\nN_Vector tmp1, N_Vector tmp2, N_Vector tmp3)\n"
-	header = header+"{\n\n"
-	header = header+"\tint i, j;\n"
-	header = header+"\tUserData data;\n"
-	fid.write(header)
+		header += "\tint i, j;\n"
+		header += "\tUserData data;\n"
+		fid.write(header)
 
-	# write parameter definitions
-	par_def = "\t/* Extract needed constants from data */\n"
-	par_def = par_def+"\tdata = (UserData) user_data;\n"
-	par_def = par_def+"\tdouble p[NPARS];\n"
-	par_def = par_def+"\tfor (i=0; i<NPARS; i++) p[i] = data->p[i];\n\n"
-	fid.write(par_def)
+		par_def = (
+			"\t/* Extract needed constants from data */\n"
+			+ "\tdata = (UserData) user_data;\n"
+		)
 
-	# write parameter definitions
-	for i, p in enumerate(ps):
-		tmp_str = '\trealtype %s =  p[%d];\n' % (p, i)
-		fid.write(tmp_str)
-		fid.write('\n')   
+		par_def += "\tdouble p[NPARS];\n"
+		par_def += "\tfor (i=0; i<NPARS; i++) p[i] = data->p[i];\n\n"
+		fid.write(par_def)
 
-	#write variables definitions
-	for i, x in enumerate(xs):
-		tmp_str = '\trealtype %s =  Ith(x,%d);\n' % (x, i+1)
-		fid.write(tmp_str)
-		fid.write('\n')
+		# write parameter definitions
+		for i, p in enumerate(ps):
+			tmp_str = '\trealtype %s =  p[%d];\n' % (p, i)
+			fid.write(tmp_str)
+			fid.write('\n')   
 
-	#write alg eqs
-	for alg in alg_dict:
-		tmp_str = '\t%s =  %s;\n' % (alg,alg_dict[alg])
-		fid.write(tmp_str)
-		fid.write('\n')
-
-	# write jacobian
-	for i in range(dfdx.shape[0]):
-		for j in range(dfdx.shape[1]):
-			if not dfdx[i,j]==0:
-				# convert formula to c-style
-				dfdx_c = convToCstr([dfdx[i,j]])
-				tmp_str = '\tIJth(J,%d,%d) = %s;\n' % (i+1,j+1, dfdx_c[0])
-				fid.write(tmp_str)
-				fid.write('\n')
-
-	# write variables definitions
-	for i, x in enumerate(xs):
-		if x in xs_alg: 
-			tmp_str = '\tIth(x,%d) = %s;\n' % (i+1, x)
+		#write variables definitions
+		for i, x in enumerate(xs):
+			tmp_str = '\trealtype %s =  Ith(x,%d);\n' % (x, i+1)
 			fid.write(tmp_str)
 			fid.write('\n')
 
-	# write footer  
-	footer = '\treturn(0);\n}\n'
-	fid.write(footer)
-	fid.close()
+		#write alg eqs
+		for alg in alg_dict:
+			tmp_str = '\t%s =  %s;\n' % (alg,alg_dict[alg])
+			fid.write(tmp_str)
+			fid.write('\n')
 
+			# write jacobian
+		for i in range(dfdx.shape[0]):
+			for j in range(dfdx.shape[1]):
+				if dfdx[i, j] != 0:
+					# convert formula to c-style
+					dfdx_c = convToCstr([dfdx[i,j]])
+					tmp_str = '\tIJth(J,%d,%d) = %s;\n' % (i+1,j+1, dfdx_c[0])
+					fid.write(tmp_str)
+					fid.write('\n')
+
+		# write variables definitions
+		for i, x in enumerate(xs):
+			if x in xs_alg: 
+				tmp_str = '\tIth(x,%d) = %s;\n' % (i+1, x)
+				fid.write(tmp_str)
+				fid.write('\n')
+
+		# write footer  
+		footer = '\treturn(0);\n}\n'
+		fid.write(footer)
 	return 1
 
 
@@ -452,7 +447,7 @@ def writeModelFiles(model_dict,force=False,atol=1e-6,rtol=1e-6,hmin=0.0,hmax=0.0
 	if force or (len(bin_exists) != 1 or bin_exists[0]==False):
 		# remove old bin files
 		for bin in bin_files:
-			rm_cmd = "rm -rf %s" % os.path.join('./bin/',bin)
+			rm_cmd = f"rm -rf {os.path.join('./bin/', bin)}"
 			os.system(rm_cmd)
 		# parse model
 		(xs,ps,fs,xs_alg,gs,dfdx) = parseSym(model_dict)
@@ -474,9 +469,7 @@ def objectiveFunction(model_dict,initvars,initpars,data,tExp):
 	model_dict['initvars'] = initvars
 
 	t,x = integrateSundials(model_dict,tSim=tExp)
-	chi2 = np.sum((x-data['x'])**2/data['sd']**2)
-
-	return chi2
+	return np.sum((x-data['x'])**2/data['sd']**2)
 
 
 def convertToD2D(model_dict,savepath='./D2D'):
