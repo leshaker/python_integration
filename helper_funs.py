@@ -14,16 +14,16 @@ def removeModelFiles():
 	# check if bin directory exists
 	if os.path.exists('bin'):
 		for binfile in os.listdir('./bin'):
-			os.remove('./bin/%s' % binfile)
+			os.remove(f'./bin/{binfile}')
 		os.rmdir('bin')
 	if os.path.exists('includes'):
 		for includesfile in os.listdir('./includes'):
-			os.remove('./includes/%s' % includesfile)
+			os.remove(f'./includes/{includesfile}')
 		os.rmdir('includes')
 	if os.path.exists('src'):
 		for cfile in os.listdir('./src'):
-			if not cfile in ['integrate_cvode.c','integrate_idas.c']:
-				os.remove('./src/%s' % cfile)
+			if cfile not in ['integrate_cvode.c', 'integrate_idas.c']:
+				os.remove(f'./src/{cfile}')
 
 	return 1
 
@@ -46,7 +46,7 @@ def cleanModelName(model_dict):
 	short_name = ''
 	# limit short name to 20 characters
 	for part in model_name.split('_'):
-		short_name = short_name+'_'+part
+		short_name = f'{short_name}_{part}'
 		if len(short_name) > 20:
 			break
 
@@ -80,15 +80,13 @@ def cleanFormula(formula):
 	"""
 	#  spaces around special characters
 	for s in ['(', ')', '*', '/', '+', '-', ',']:
-		formula = formula.replace(s, ' %s ' % s)
+		formula = formula.replace(s, f' {s} ')
 	# reduce spaces '   ' -> ' '
-	for i in range(3):
+	for _ in range(3):
 		formula = formula.replace("  ", " ")
-	# substitutes xe-xx for xxe - xx
-	match = re.search(r'\de - ', formula)
-	if match:
-		my_digit = match.group(0)[0]
-		formula = formula.replace(match.group(0), my_digit + 'e-')
+	if match := re.search(r'\de - ', formula):
+		my_digit = match[0][0]
+		formula = formula.replace(match[0], f'{my_digit}e-')
 	# convert string to float with decimal point and back ('1' to '1.0')
 	split_formula = formula.split(' ')
 	n_split_formula = []
@@ -126,12 +124,11 @@ def modelHash(model_dict):
 	"""
 	generate checksum for model dict
 	"""
-	
+
 	model_structure = [model_dict[m] for m in model_dict if m not in ['initpars','initvars']]
-	checksum = abs(hash(repr(model_structure)))
 	#checksum = abs(reduce(lambda x,y : x^y, [hash(str(item)) for item in model_dict.items()]))
 
-	return checksum
+	return abs(hash(repr(model_structure)))
 
 
 def SBMLwritePythonModule(module_dict,doc_txt=''):
@@ -452,16 +449,15 @@ def convToDict(model_name,x_names,p_names,dxdt,x0=[],p0=[]):
 	"""
 	converts lists of variables, parameters and odes to model dictionary
 	"""
-	model_dict = {}
-	model_dict['name'] = model_name
-	model_dict['odes'] = dict(zip(x_names,dxdt))
-	model_dict['vars'] = x_names
-	model_dict['pars'] = p_names
-
-	if x0 == []:
-		model_dict['initvars'] = dict(zip(x_names, 0.1*np.ones([len(x_names)])))
-	else:
-		model_dict['initvars'] = dict(zip(x_names, x0))
+	model_dict = {
+		'name': model_name,
+		'odes': dict(zip(x_names, dxdt)),
+		'vars': x_names,
+		'pars': p_names,
+		'initvars': dict(zip(x_names, 0.1 * np.ones([len(x_names)])))
+		if x0 == []
+		else dict(zip(x_names, x0)),
+	}
 
 	if p0 == []:
 		model_dict['initpars'] = dict(zip(p_names, 0.1*np.ones([len(p_names)])))

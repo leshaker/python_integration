@@ -15,14 +15,15 @@ def EpoEpoR():
 	t_name = 't'
 
 	# define rhs of ODEs
-	dxdt = []
+	dxdt = [
+		'- kon * Epo * EpoR + koff * EpoEpoR + kex * EpoEpoRi',
+		'- kon * Epo * EpoR + koff * EpoEpoR + kt * EpoR0 - kt * EpoR + kex * EpoEpoRi',
+		'kon * Epo * EpoR - koff * EpoEpoR - ke * EpoEpoR',
+		'ke * EpoEpoR - kex * EpoEpoRi - kdi * EpoEpoRi - kde * EpoEpoRi',
+		'kdi * EpoEpoRi',
+		'kde * EpoEpoRi',
+	]
 
-	dxdt.append('- kon * Epo * EpoR + koff * EpoEpoR + kex * EpoEpoRi')
-	dxdt.append('- kon * Epo * EpoR + koff * EpoEpoR + kt * EpoR0 - kt * EpoR + kex * EpoEpoRi')
-	dxdt.append('kon * Epo * EpoR - koff * EpoEpoR - ke * EpoEpoR')
-	dxdt.append('ke * EpoEpoR - kex * EpoEpoRi - kdi * EpoEpoRi - kde * EpoEpoRi')
-	dxdt.append('kdi * EpoEpoRi')
-	dxdt.append('kde * EpoEpoRi')
 
 	return (t_name, x_names, p_names, dxdt)
 
@@ -38,11 +39,12 @@ def ToyModel():
 	t_name = 't'
 
 	# define rhs of ODEs
-	dxdt = []
+	dxdt = [
+		'- k1 * A + k2 * B - k3 * A * B + k4 * C',
+		'+ k1 * A - k2 * B - k3 * A * B + k4 * C',
+		'+ k3 * A * B - k4 * C',
+	]
 
-	dxdt.append('- k1 * A + k2 * B - k3 * A * B + k4 * C')
-	dxdt.append('+ k1 * A - k2 * B - k3 * A * B + k4 * C')
-	dxdt.append('+ k3 * A * B - k4 * C')
 
 	return (t_name, x_names, p_names, dxdt)
 
@@ -58,11 +60,12 @@ def ToyModel2():
 	t_name = 't'
 
 	# define rhs of ODEs
-	dxdt = []
+	dxdt = [
+		'- k1 * log ( A ) + k2 * B ** k3 * log ( A * B ) + C**k4',
+		'+ k1 * A - k2 * B - k3 * A * B + k4 * C',
+		'+ k3 * A * B - k4 * C',
+	]
 
-	dxdt.append('- k1 * log ( A ) + k2 * B ** k3 * log ( A * B ) + C**k4')
-	dxdt.append('+ k1 * A - k2 * B - k3 * A * B + k4 * C')
-	dxdt.append('+ k3 * A * B - k4 * C')
 
 	return (t_name, x_names, p_names, dxdt)
 
@@ -94,13 +97,16 @@ def MAPK():
 		 "k10*MAPKp/(KK10+MAPKp)"]
 
 	# define rhs of ODEs
-	dxdt = [v[2]+"-"+v[1], 						# MKKK
-			v[1]+"-"+v[2], 						# MKKKp
-			v[6]+"-"+v[3],						# MKK
-			v[3]+"+"+v[5]+"-"+v[4]+"-"+v[6],	# MKKp
-			v[4]+"-"+v[5],						# MKKpp
-			v[10]+"-"+v[7],						# MAPK
-			v[7]+"+"+v[9]+"-"+v[8]+"-"+v[10],	# MAPKp
-			v[8]+"-"+v[9]]						# MAPKpp
+	dxdt = [
+		f"{v[2]}-{v[1]}",
+		f"{v[1]}-{v[2]}",
+		f"{v[6]}-{v[3]}",
+		f"{v[3]}+{v[5]}-{v[4]}-{v[6]}",
+		f"{v[4]}-{v[5]}",
+		f"{v[10]}-{v[7]}",
+		f"{v[7]}+{v[9]}-{v[8]}-{v[10]}",
+		f"{v[8]}-{v[9]}",
+	]
+
 
 	return (t_name, x_names, p_names, dxdt)
